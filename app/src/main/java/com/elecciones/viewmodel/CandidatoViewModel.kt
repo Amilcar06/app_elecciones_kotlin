@@ -1,0 +1,77 @@
+package com.elecciones.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.elecciones.data.entities.Candidato
+import com.elecciones.repository.EleccionesRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+/**
+ * ViewModel para la gestión de Candidatos.
+ */
+class CandidatoViewModel(private val repository: EleccionesRepository) : ViewModel() {
+
+    // MutableStateFlow para mantener el ID del frente actualmente seleccionado.
+    private val _frenteId = MutableStateFlow<Int?>(null)
+
+    /**
+     * Expone la lista de candidatos para el frente seleccionado.
+     * Utiliza flatMapLatest para cambiar automáticamente la fuente del Flow
+     * cada vez que el _frenteId cambia.
+     */
+    val candidatos: StateFlow<List<Candidato>> = _frenteId.flatMapLatest { frenteId ->
+        if (frenteId != null) {
+            repository.getCandidatosPorFrente(frenteId)
+        } else {
+            flowOf(emptyList()) // Si no hay ID, emite una lista vacía
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    /**
+     * Expone la lista de todos los candidatos.
+     */
+    val todosLosCandidatos: StateFlow<List<Candidato>> = repository.todosLosCandidatos
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    /**
+     * Establece el ID del frente para el cual se deben cargar los candidatos.
+     */
+    fun setFrenteId(frenteId: Int) {
+        _frenteId.value = frenteId
+    }
+
+    /**
+     * Inserta un nuevo candidato.
+     */
+    fun insertarCandidato(candidato: Candidato) = viewModelScope.launch {
+        repository.insertarCandidato(candidato)
+    }
+
+    /**
+     * Actualiza un candidato existente.
+     */
+    fun actualizarCandidato(candidato: Candidato) = viewModelScope.launch {
+        repository.actualizarCandidato(candidato)
+    }
+
+    /**
+     * Elimina un candidato.
+     */
+    fun eliminarCandidato(candidato: Candidato) = viewModelScope.launch {
+        repository.eliminarCandidato(candidato)
+    }
+}
