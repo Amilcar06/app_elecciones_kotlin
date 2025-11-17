@@ -47,4 +47,28 @@ interface CandidatoDao {
      */
     @androidx.room.Query("SELECT * FROM Candidato ORDER BY paterno, materno, nombre ASC")
     fun getAllCandidatos(): Flow<List<Candidato>>
+    
+    /**
+     * Verifica si existe un candidato con el CI dado.
+     */
+    @androidx.room.Query("SELECT COUNT(*) FROM Candidato WHERE ci = :ci")
+    suspend fun existeCI(ci: String): Int
+    
+    /**
+     * Verifica si existe un candidato con el CI dado, excluyendo un ID específico (útil para edición).
+     */
+    @androidx.room.Query("SELECT COUNT(*) FROM Candidato WHERE ci = :ci AND id_candidato != :excluirId")
+    suspend fun existeCIExcluyendo(ci: String, excluirId: Int): Int
+    
+    /**
+     * Verifica si existe un candidato con el correo dado.
+     */
+    @androidx.room.Query("SELECT COUNT(*) FROM Candidato WHERE correo = :correo")
+    suspend fun existeCorreo(correo: String): Int
+    
+    /**
+     * Verifica si existe un candidato con el correo dado, excluyendo un ID específico (útil para edición).
+     */
+    @androidx.room.Query("SELECT COUNT(*) FROM Candidato WHERE correo = :correo AND id_candidato != :excluirId")
+    suspend fun existeCorreoExcluyendo(correo: String, excluirId: Int): Int
 }

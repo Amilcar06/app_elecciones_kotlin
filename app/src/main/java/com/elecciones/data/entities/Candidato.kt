@@ -40,7 +40,7 @@ data class Candidato(
     val id_frente: Int,
     val nombre: String,
     val paterno: String,
-    val materno: String,
+    val materno: String?, // Opcional: algunos candidatos pueden no tener apellido materno
     val genero: String,
     val direccion: String?,
     val fecha_nacimiento: String,

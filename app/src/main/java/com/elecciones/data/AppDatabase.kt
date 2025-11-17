@@ -7,13 +7,13 @@ import androidx.room.RoomDatabase
 import com.elecciones.data.dao.CandidatoDao
 import com.elecciones.data.dao.EleccionDao
 import com.elecciones.data.dao.FrenteDao
-import com.elecciones.data.dao.PuestoElectoralDao
 import com.elecciones.data.dao.PostulacionDao
+import com.elecciones.data.dao.PuestoElectoralDao
 import com.elecciones.data.entities.Candidato
 import com.elecciones.data.entities.Eleccion
 import com.elecciones.data.entities.Frente
-import com.elecciones.data.entities.PuestoElectoral
 import com.elecciones.data.entities.Postulacion
+import com.elecciones.data.entities.PuestoElectoral
 
 /**
  * Clase principal de la base de datos de la aplicación.
@@ -28,7 +28,7 @@ import com.elecciones.data.entities.Postulacion
         PuestoElectoral::class,
         Postulacion::class
     ],
-    version = 5, // Nueva versión: nueva estructura con PuestoElectoral y Postulacion
+    version = 6, // Nueva versión: nueva estructura con PuestoElectoral y Postulacion
     exportSchema = false // No exportar el esquema para simplificar
 )
 abstract class AppDatabase : RoomDatabase() {

@@ -89,6 +89,9 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     kapt(libs.androidx.room.compiler)
+    
+    // Coil para cargar imágenes
+    implementation("io.coil-kt:coil-compose:2.5.0")
 
     // ELIMINA ESTAS LÍNEAS CONFLICTIVAS
     // implementation(libs.ui) <-- Redundante

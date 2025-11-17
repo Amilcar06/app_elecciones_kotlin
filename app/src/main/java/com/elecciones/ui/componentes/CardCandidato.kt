@@ -5,8 +5,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,13 +31,18 @@ import com.elecciones.ui.theme.AppEleccionesTheme
  *
  * @param candidato El objeto Candidato a mostrar.
  * @param onClick Acción a ejecutar al hacer clic en la tarjeta.
+ * @param onEditClick Acción a ejecutar cuando se hace clic en editar (opcional).
+ * @param onDeleteClick Acción a ejecutar cuando se hace clic en eliminar (opcional).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CardCandidato(
     candidato: Candidato,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onEditClick: (() -> Unit)? = null,
+    onDeleteClick: (() -> Unit)? = null
 ) {
+    var mostrarMenu by remember { mutableStateOf(false) }
     Card(
         onClick = onClick,
         modifier = Modifier
@@ -74,6 +86,59 @@ fun CardCandidato(
                 contentDescription = "Ver detalles del candidato",
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            
+            // Menú contextual si hay acciones disponibles
+            if (onEditClick != null || onDeleteClick != null) {
+                Box {
+                    IconButton(
+                        onClick = { mostrarMenu = true },
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "Opciones",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    
+                    DropdownMenu(
+                        expanded = mostrarMenu,
+                        onDismissRequest = { mostrarMenu = false }
+                    ) {
+                        if (onEditClick != null) {
+                            DropdownMenuItem(
+                                text = { Text("Editar") },
+                                onClick = {
+                                    mostrarMenu = false
+                                    onEditClick()
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Editar"
+                                    )
+                                }
+                            )
+                        }
+                        if (onDeleteClick != null) {
+                            DropdownMenuItem(
+                                text = { Text("Eliminar") },
+                                onClick = {
+                                    mostrarMenu = false
+                                    onDeleteClick()
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Eliminar",
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

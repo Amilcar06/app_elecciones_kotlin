@@ -52,8 +52,9 @@ fun DetallePuestoScreen(
     val puesto by eleccionViewModel.puestoActual.collectAsState()
     val postulaciones by eleccionViewModel.postulacionesPorPuesto.collectAsState()
 
-    val puedeModificar = puesto?.estado != "Cerrado"
-    val puedeRegistrarVotos = puesto?.estado == "Abierto" || puesto?.estado == "Votación"
+    // Validaciones de estado: no se puede modificar si está en "Votación" o "Cerrado"
+    val puedeModificar = puesto?.estado == "Abierto"
+    val puedeRegistrarVotos = puesto?.estado == "Abierto" && postulaciones.isNotEmpty()
     val puedeVerResultados = puesto?.estado == "Cerrado"
 
     Scaffold(
@@ -78,12 +79,31 @@ fun DetallePuestoScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            Text(
-                text = "Estado: ${puesto?.estado ?: ""}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+            // Información del puesto
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Estado: ${puesto?.estado ?: ""}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Candidatos postulados: ${postulaciones.size}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
 
             if (postulaciones.isEmpty()) {
                 Text(
@@ -106,12 +126,13 @@ fun DetallePuestoScreen(
                 }
             }
 
-            if (puedeRegistrarVotos && postulaciones.isNotEmpty()) {
+            if (puesto?.estado == "Abierto") {
                 Button(
                     onClick = onRegistrarVotosClick,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 16.dp)
+                        .padding(top = 16.dp),
+                    enabled = postulaciones.isNotEmpty()
                 ) {
                     Text("Registrar Votos")
                 }

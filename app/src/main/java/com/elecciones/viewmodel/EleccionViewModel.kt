@@ -11,11 +11,13 @@ import com.elecciones.repository.EleccionesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * ViewModel para la gestión de Elecciones, Puestos Electorales y Postulaciones.
@@ -148,13 +150,8 @@ class EleccionViewModel(private val repository: EleccionesRepository) : ViewMode
     }
 
     /** Inserta una nueva postulación. */
-    fun insertarPostulacion(postulacion: Postulacion) = viewModelScope.launch {
-        try {
-            repository.insertarPostulacion(postulacion)
-        } catch (e: IllegalStateException) {
-            // Manejar error de postulación duplicada
-            throw e
-        }
+    suspend fun insertarPostulacion(postulacion: Postulacion) {
+        repository.insertarPostulacion(postulacion)
     }
 
     /** Elimina una postulación. */
@@ -168,21 +165,37 @@ class EleccionViewModel(private val repository: EleccionesRepository) : ViewMode
      * - Actualiza votos nulos y blancos
      * - Cierra el puesto (estado = "Cerrado")
      */
-    fun registrarVotosPorPuesto(
+    suspend fun registrarVotosPorPuesto(
         puestoId: Int,
         postulaciones: List<Postulacion>,
         votosNulos: Int,
         votosBlancos: Int
-    ) = viewModelScope.launch {
+    ) {
+        // Registrar los votos (esto cierra el puesto)
         repository.registrarVotosPorPuesto(puestoId, postulaciones, votosNulos, votosBlancos)
         
         // Intentar cerrar la elección si todos los puestos están cerrados
-        val puesto = repository.getPuestoById(puestoId).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null).value
-        puesto?.let {
+        // Esto se hace en un launch separado para no bloquear
+        viewModelScope.launch {
             try {
-                repository.cerrarEleccionSiCompleta(it.id_eleccion)
-            } catch (e: IllegalStateException) {
-                // No todos los puestos están cerrados, está bien
+                // Obtener el puesto de forma segura con timeout
+                val puestoObtenido = withTimeoutOrNull(2000) {
+                    repository.getPuestoById(puestoId).first()
+                }
+                
+                puestoObtenido?.let {
+                    try {
+                        repository.cerrarEleccionSiCompleta(it.id_eleccion)
+                    } catch (e: IllegalStateException) {
+                        // No todos los puestos están cerrados, está bien - no es un error
+                    } catch (e: Exception) {
+                        // Cualquier otro error al cerrar la elección, no es crítico
+                        // El registro de votos ya se completó exitosamente
+                    }
+                }
+            } catch (e: Exception) {
+                // Cualquier error aquí no debe afectar el registro de votos
+                // El puesto ya fue cerrado exitosamente
             }
         }
     }
@@ -213,5 +226,40 @@ class EleccionViewModel(private val repository: EleccionesRepository) : ViewMode
      */
     suspend fun frenteTieneCandidatos(frenteId: Int): Boolean {
         return repository.contarCandidatosPorFrente(frenteId) > 0
+    }
+    
+    /**
+     * Verifica si existe una elección con la gestión dada.
+     */
+    suspend fun existeGestion(gestion: Int): Boolean {
+        return repository.existeGestion(gestion)
+    }
+    
+    /**
+     * Verifica si existe una elección con la gestión dada, excluyendo un ID específico.
+     */
+    suspend fun existeGestionExcluyendo(gestion: Int, excluirId: Int): Boolean {
+        return repository.existeGestionExcluyendo(gestion, excluirId)
+    }
+    
+    /**
+     * Verifica si existe un puesto con el mismo nombre en la misma elección.
+     */
+    suspend fun existeNombrePuestoEnEleccion(eleccionId: Int, nombrePuesto: String): Boolean {
+        return repository.existeNombrePuestoEnEleccion(eleccionId, nombrePuesto)
+    }
+    
+    /**
+     * Verifica si existe un puesto con el mismo nombre en la misma elección, excluyendo un ID específico.
+     */
+    suspend fun existeNombrePuestoEnEleccionExcluyendo(eleccionId: Int, nombrePuesto: String, excluirId: Int): Boolean {
+        return repository.existeNombrePuestoEnEleccionExcluyendo(eleccionId, nombrePuesto, excluirId)
+    }
+    
+    /**
+     * Cuenta las postulaciones de un puesto.
+     */
+    suspend fun contarPostulacionesPorPuesto(puestoId: Int): Int {
+        return repository.contarPostulacionesPorPuesto(puestoId)
     }
 }

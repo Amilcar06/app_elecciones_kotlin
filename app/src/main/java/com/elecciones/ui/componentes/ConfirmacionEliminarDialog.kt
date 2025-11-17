@@ -15,6 +15,8 @@ fun ConfirmacionEliminarDialog(
     mensaje: String,
     tieneCandidatos: Boolean = false,
     tieneElecciones: Boolean = false,
+    textoConfirmar: String = "ELIMINAR",
+    textoCancelar: String = "CANCELAR",
     onConfirmar: () -> Unit,
     onCancelar: () -> Unit
 ) {
@@ -26,7 +28,9 @@ fun ConfirmacionEliminarDialog(
         if (tieneElecciones) {
             append("\n\n⚠️ Este frente está participando en elecciones activas.")
         }
-        append("\n\n¿Desea continuar?")
+        if (tieneCandidatos || tieneElecciones) {
+            append("\n\n¿Desea continuar?")
+        }
     }
 
     AlertDialog(
@@ -35,12 +39,12 @@ fun ConfirmacionEliminarDialog(
         text = { Text(mensajeCompleto) },
         confirmButton = {
             TextButton(onClick = onConfirmar) {
-                Text("ELIMINAR")
+                Text(textoConfirmar)
             }
         },
         dismissButton = {
             TextButton(onClick = onCancelar) {
-                Text("CANCELAR")
+                Text(textoCancelar)
             }
         }
     )

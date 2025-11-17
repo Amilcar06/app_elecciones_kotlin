@@ -68,5 +68,23 @@ interface PuestoElectoralDao {
      */
     @Query("UPDATE Puesto_Electoral SET votos_nulos = :votosNulos, votos_blancos = :votosBlancos WHERE id_puesto = :puestoId")
     suspend fun updateVotosNulosYBlancos(puestoId: Int, votosNulos: Int, votosBlancos: Int)
+    
+    /**
+     * Verifica si existe un puesto con el mismo nombre en la misma elección.
+     */
+    @Query("SELECT COUNT(*) FROM Puesto_Electoral WHERE id_eleccion = :eleccionId AND nombre_puesto = :nombrePuesto")
+    suspend fun existeNombrePuestoEnEleccion(eleccionId: Int, nombrePuesto: String): Int
+    
+    /**
+     * Verifica si existe un puesto con el mismo nombre en la misma elección, excluyendo un ID específico (útil para edición).
+     */
+    @Query("SELECT COUNT(*) FROM Puesto_Electoral WHERE id_eleccion = :eleccionId AND nombre_puesto = :nombrePuesto AND id_puesto != :excluirId")
+    suspend fun existeNombrePuestoEnEleccionExcluyendo(eleccionId: Int, nombrePuesto: String, excluirId: Int): Int
+    
+    /**
+     * Cuenta las postulaciones de un puesto (para validar si se puede eliminar).
+     */
+    @Query("SELECT COUNT(*) FROM Postulacion WHERE id_puesto = :puestoId")
+    suspend fun contarPostulacionesPorPuesto(puestoId: Int): Int
 }
 

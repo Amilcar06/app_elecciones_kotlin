@@ -74,4 +74,32 @@ class CandidatoViewModel(private val repository: EleccionesRepository) : ViewMod
     fun eliminarCandidato(candidato: Candidato) = viewModelScope.launch {
         repository.eliminarCandidato(candidato)
     }
+    
+    /**
+     * Verifica si existe un candidato con el CI dado.
+     */
+    suspend fun existeCI(ci: String): Boolean {
+        return repository.existeCI(ci)
+    }
+    
+    /**
+     * Verifica si existe un candidato con el CI dado, excluyendo un ID específico.
+     */
+    suspend fun existeCIExcluyendo(ci: String, excluirId: Int): Boolean {
+        return repository.existeCIExcluyendo(ci, excluirId)
+    }
+    
+    /**
+     * Verifica si existe un candidato con el correo dado.
+     */
+    suspend fun existeCorreo(correo: String): Boolean {
+        return repository.existeCorreo(correo)
+    }
+    
+    /**
+     * Verifica si existe un candidato con el correo dado, excluyendo un ID específico.
+     */
+    suspend fun existeCorreoExcluyendo(correo: String, excluirId: Int): Boolean {
+        return repository.existeCorreoExcluyendo(correo, excluirId)
+    }
 }

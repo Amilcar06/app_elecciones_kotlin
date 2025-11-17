@@ -57,8 +57,13 @@ fun PuestosElectoralesScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddPuestoClick) {
-                Icon(Icons.Default.Add, contentDescription = "Añadir Puesto")
+            // Ocultar el botón si la elección está finalizada
+            // Estados posibles: "Programada", "En curso", "Finalizado"
+            val estadoEleccion = eleccion?.estado
+            if (estadoEleccion != "Finalizado") {
+                FloatingActionButton(onClick = onAddPuestoClick) {
+                    Icon(Icons.Default.Add, contentDescription = "Añadir Puesto")
+                }
             }
         }
     ) { paddingValues ->

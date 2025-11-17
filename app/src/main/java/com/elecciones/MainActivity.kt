@@ -32,6 +32,7 @@ import androidx.navigation.navArgument
 import com.elecciones.data.AppDatabase
 import com.elecciones.repository.EleccionesRepository
 import com.elecciones.ui.candidatos.CandidatosScreen
+import com.elecciones.ui.candidatos.DetalleCandidatoScreen
 import com.elecciones.ui.candidatos.RegistrarCandidatoScreen
 import com.elecciones.ui.elecciones.DetallePuestoScreen
 import com.elecciones.ui.elecciones.EleccionesScreen
@@ -362,7 +363,15 @@ fun AppNavigation(
                 frenteViewModel = frenteViewModel,
                 frenteId = frenteId,
                 onAddCandidatoClick = { navController.navigate("registrar_candidato/$frenteId") },
-                onCandidatoClick = { /* navController.navigate("detalle_candidato/$it") */ }
+                onCandidatoClick = { candidatoId -> 
+                    navController.navigate("detalle_candidato/$candidatoId")
+                },
+                onEditCandidatoClick = { candidatoId ->
+                    navController.navigate("editar_candidato/$candidatoId")
+                },
+                onDeleteCandidatoClick = { 
+                    navController.popBackStack()
+                }
             )
         }
 
@@ -375,6 +384,46 @@ fun AppNavigation(
                 candidatoViewModel = candidatoViewModel,
                 frenteViewModel = frenteViewModel,
                 frenteId = frenteId,
+                onGuardarAccion = { navController.popBackStack() }
+            )
+        }
+        
+        composable(
+            "detalle_candidato/{candidatoId}",
+            arguments = listOf(navArgument("candidatoId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val candidatoId = backStackEntry.arguments?.getInt("candidatoId") ?: 0
+            val candidatos by candidatoViewModel.todosLosCandidatos.collectAsState()
+            val candidato = candidatos.find { it.id_candidato == candidatoId }
+            val frenteId = candidato?.id_frente ?: 0
+            
+            DetalleCandidatoScreen(
+                candidatoViewModel = candidatoViewModel,
+                frenteViewModel = frenteViewModel,
+                candidatoId = candidatoId,
+                onEditarClick = { 
+                    navController.navigate("editar_candidato/$candidatoId")
+                },
+                onEliminarClick = { 
+                    navController.popBackStack()
+                }
+            )
+        }
+        
+        composable(
+            "editar_candidato/{candidatoId}",
+            arguments = listOf(navArgument("candidatoId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val candidatoId = backStackEntry.arguments?.getInt("candidatoId") ?: 0
+            val candidatos by candidatoViewModel.todosLosCandidatos.collectAsState()
+            val candidato = candidatos.find { it.id_candidato == candidatoId }
+            val frenteId = candidato?.id_frente ?: 0
+            
+            RegistrarCandidatoScreen(
+                candidatoViewModel = candidatoViewModel,
+                frenteViewModel = frenteViewModel,
+                frenteId = frenteId,
+                candidatoId = candidatoId,
                 onGuardarAccion = { navController.popBackStack() }
             )
         }

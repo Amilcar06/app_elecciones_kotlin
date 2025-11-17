@@ -34,9 +34,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import android.net.Uri
+import androidx.compose.runtime.remember
 import com.elecciones.data.entities.Frente
 import com.elecciones.ui.componentes.ColorPicker
 import com.elecciones.ui.componentes.DatePickerDialog
+import com.elecciones.ui.componentes.ImagePicker
 import com.elecciones.ui.theme.AppEleccionesTheme
 import com.elecciones.ui.utilidades.validarColorHex
 import com.elecciones.ui.utilidades.validarFormatoFecha
@@ -66,6 +69,20 @@ fun RegistrarFrenteScreen(
     var color by remember(frente) { mutableStateOf(frente?.color ?: "#0066CC") }
     var fechaFundacion by remember(frente) { mutableStateOf(frente?.fecha_fundacion ?: "") }
     var descripcion by remember(frente) { mutableStateOf(frente?.descripcion ?: "") }
+    
+    // Estado para la imagen del logo
+    val logoUri = remember(frente) {
+        if (frente?.logo_url != null && frente.logo_url.isNotBlank()) {
+            try {
+                Uri.parse(frente.logo_url)
+            } catch (e: Exception) {
+                null
+            }
+        } else {
+            null
+        }
+    }
+    var logoUriState by remember(frente) { mutableStateOf<Uri?>(logoUri) }
 
     // Estados para diálogos
     var mostrarDatePicker by remember { mutableStateOf(false) }
@@ -164,16 +181,24 @@ fun RegistrarFrenteScreen(
                 } else null
             )
 
-            // Campo para logo URL (selector de imagen básico)
-            OutlinedTextField(
-                value = frente?.logo_url ?: "",
-                onValueChange = { /* Se podría actualizar aquí si se guarda en el estado */ },
-                label = { Text("URL del Logo (Opcional)") },
+            // Selector de imagen para el logo
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                enabled = false, // Por ahora deshabilitado, se puede mejorar después
-                supportingText = { Text("Función de selección de imagen en desarrollo") }
-            )
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Logo del Frente",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                ImagePicker(
+                    imageUri = logoUriState,
+                    onImageSelected = { uri ->
+                        logoUriState = uri
+                    }
+                )
+            }
 
             // Campo de texto para la descripción
             OutlinedTextField(
@@ -205,6 +230,7 @@ fun RegistrarFrenteScreen(
                                 val frenteActualizado = frente.copy(
                                     nombre = nombre,
                                     color = color,
+                                    logo_url = logoUriState?.toString(), // Guardar URI como string
                                     fecha_fundacion = fechaFundacion,
                                     descripcion = descripcion.takeIf { it.isNotBlank() }
                                 )
@@ -214,7 +240,7 @@ fun RegistrarFrenteScreen(
                                 val nuevoFrente = Frente(
                                     nombre = nombre,
                                     color = color,
-                                    logo_url = null, // Placeholder
+                                    logo_url = logoUriState?.toString(), // Guardar URI como string
                                     fecha_fundacion = fechaFundacion,
                                     descripcion = descripcion.takeIf { it.isNotBlank() }
                                 )

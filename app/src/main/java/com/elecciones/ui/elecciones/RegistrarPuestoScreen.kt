@@ -2,8 +2,11 @@ package com.elecciones.ui.elecciones
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -18,11 +21,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.elecciones.data.entities.PuestoElectoral
 import com.elecciones.viewmodel.EleccionViewModel
+import kotlinx.coroutines.launch
 
 /**
  * Pantalla para registrar o editar un puesto electoral.
@@ -36,6 +41,7 @@ fun RegistrarPuestoScreen(
     puestoId: Int? = null,
     onGuardarClick: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
     LaunchedEffect(eleccionId) {
         eleccionViewModel.setEleccionId(eleccionId)
     }
@@ -46,12 +52,19 @@ fun RegistrarPuestoScreen(
     } else null
 
     var nombrePuesto by remember { mutableStateOf(puestoActual?.nombre_puesto ?: "") }
+    var mostrarErrorNombre by remember { mutableStateOf(false) }
+    var mensajeErrorNombre by remember { mutableStateOf("") }
+    var verificarNombre by remember { mutableStateOf(false) }
 
     LaunchedEffect(puestoActual) {
         if (puestoActual != null) {
             nombrePuesto = puestoActual.nombre_puesto
         }
     }
+    
+    // Validaciones
+    val nombreValido = nombrePuesto.trim().length >= 5 && nombrePuesto.trim().length <= 100
+    val isFormularioValido = nombreValido && !mostrarErrorNombre
 
     Scaffold(
         topBar = {
@@ -66,52 +79,96 @@ fun RegistrarPuestoScreen(
         Column(
             modifier = Modifier
                 .padding(paddingValues)
-                .padding(16.dp)
+                .fillMaxSize()
         ) {
-            Text(
-                text = "Elección: ${eleccion?.gestion ?: ""}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    text = "Elección: ${eleccion?.gestion ?: ""}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
 
-            OutlinedTextField(
-                value = nombrePuesto,
-                onValueChange = { nombrePuesto = it },
-                label = { Text("Nombre del Puesto") },
-                placeholder = { Text("Ej: Director de Carrera") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-
+                OutlinedTextField(
+                    value = nombrePuesto,
+                    onValueChange = { 
+                        nombrePuesto = it
+                        verificarNombre = false
+                        mostrarErrorNombre = false
+                    },
+                    label = { Text("Nombre del Puesto *") },
+                    placeholder = { Text("Ej: Director de Carrera") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    isError = (nombrePuesto.isNotBlank() && !nombreValido) || mostrarErrorNombre,
+                    supportingText = {
+                        when {
+                            nombrePuesto.isBlank() -> Text("Campo obligatorio")
+                            !nombreValido -> {
+                                if (nombrePuesto.trim().length < 5) {
+                                    Text("Mínimo 5 caracteres")
+                                } else {
+                                    Text("Máximo 100 caracteres")
+                                }
+                            }
+                            mostrarErrorNombre -> Text(mensajeErrorNombre)
+                            else -> {}
+                        }
+                    }
+                )
+            }
+            
             Button(
                 onClick = {
-                    if (nombrePuesto.isNotBlank()) {
-                        val puesto = if (puestoId != null && puestoActual != null) {
-                            puestoActual.copy(nombre_puesto = nombrePuesto)
+                    scope.launch {
+                        verificarNombre = true
+                        val nombreTrimmed = nombrePuesto.trim()
+                        
+                        val existeNombre = if (puestoId != null) {
+                            eleccionViewModel.existeNombrePuestoEnEleccionExcluyendo(eleccionId, nombreTrimmed, puestoId)
                         } else {
-                            PuestoElectoral(
-                                id_eleccion = eleccionId,
-                                nombre_puesto = nombrePuesto,
-                                estado = "Abierto"
-                            )
+                            eleccionViewModel.existeNombrePuestoEnEleccion(eleccionId, nombreTrimmed)
                         }
-                        if (puestoId != null) {
-                            eleccionViewModel.actualizarPuesto(puesto)
+                        
+                        mostrarErrorNombre = existeNombre
+                        mensajeErrorNombre = if (existeNombre) {
+                            "Ya existe un puesto con este nombre en esta elección."
                         } else {
-                            eleccionViewModel.insertarPuesto(puesto)
+                            ""
                         }
-                        onGuardarClick()
+                        
+                        if (!existeNombre && isFormularioValido) {
+                            val puesto = if (puestoId != null && puestoActual != null) {
+                                puestoActual.copy(nombre_puesto = nombreTrimmed)
+                            } else {
+                                PuestoElectoral(
+                                    id_eleccion = eleccionId,
+                                    nombre_puesto = nombreTrimmed,
+                                    estado = "Abierto"
+                                )
+                            }
+                            if (puestoId != null) {
+                                eleccionViewModel.actualizarPuesto(puesto)
+                            } else {
+                                eleccionViewModel.insertarPuesto(puesto)
+                            }
+                            onGuardarClick()
+                        }
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp),
-                enabled = nombrePuesto.isNotBlank()
+                    .padding(16.dp),
+                enabled = isFormularioValido
             ) {
-                Text("Guardar Puesto")
+                Text(if (puestoId == null) "Guardar Puesto" else "Actualizar Puesto")
             }
         }
     }
 }
-

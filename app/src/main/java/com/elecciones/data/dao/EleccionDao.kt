@@ -36,4 +36,16 @@ interface EleccionDao {
      */
     @androidx.room.Query("SELECT * FROM Eleccion ORDER BY gestion DESC")
     fun getAllElecciones(): Flow<List<Eleccion>>
+    
+    /**
+     * Verifica si existe una elección con la gestión dada.
+     */
+    @androidx.room.Query("SELECT COUNT(*) FROM Eleccion WHERE gestion = :gestion")
+    suspend fun existeGestion(gestion: Int): Int
+    
+    /**
+     * Verifica si existe una elección con la gestión dada, excluyendo un ID específico (útil para edición).
+     */
+    @androidx.room.Query("SELECT COUNT(*) FROM Eleccion WHERE gestion = :gestion AND id_eleccion != :excluirId")
+    suspend fun existeGestionExcluyendo(gestion: Int, excluirId: Int): Int
 }

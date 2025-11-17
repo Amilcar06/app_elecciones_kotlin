@@ -1,5 +1,6 @@
 package com.elecciones.ui.componentes
 
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -15,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,7 +26,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.elecciones.R
 import com.elecciones.data.entities.Frente
 import com.elecciones.ui.theme.AppEleccionesTheme
@@ -67,14 +70,43 @@ fun CardFrente(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Logo del frente
-            Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground), // Placeholder
-                contentDescription = "Logo de ${frente.nombre}",
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
+            val context = LocalContext.current
+            val logoUri = remember(frente.logo_url) {
+                if (frente.logo_url != null && frente.logo_url.isNotBlank()) {
+                    try {
+                        Uri.parse(frente.logo_url)
+                    } catch (e: Exception) {
+                        null
+                    }
+                } else {
+                    null
+                }
+            }
+            
+            if (logoUri != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(
+                        ImageRequest.Builder(context)
+                            .data(logoUri)
+                            .build()
+                    ),
+                    contentDescription = "Logo de ${frente.nombre}",
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                // Placeholder si no hay logo
+                Image(
+                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                    contentDescription = "Logo de ${frente.nombre}",
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
 
             Spacer(modifier = Modifier.width(16.dp))
 

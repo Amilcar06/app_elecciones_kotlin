@@ -73,6 +73,34 @@ class EleccionesRepository(
     suspend fun eliminarCandidato(candidato: Candidato) {
         candidatoDao.delete(candidato)
     }
+    
+    /**
+     * Verifica si existe un candidato con el CI dado.
+     */
+    suspend fun existeCI(ci: String): Boolean {
+        return candidatoDao.existeCI(ci) > 0
+    }
+    
+    /**
+     * Verifica si existe un candidato con el CI dado, excluyendo un ID específico (útil para edición).
+     */
+    suspend fun existeCIExcluyendo(ci: String, excluirId: Int): Boolean {
+        return candidatoDao.existeCIExcluyendo(ci, excluirId) > 0
+    }
+    
+    /**
+     * Verifica si existe un candidato con el correo dado.
+     */
+    suspend fun existeCorreo(correo: String): Boolean {
+        return candidatoDao.existeCorreo(correo) > 0
+    }
+    
+    /**
+     * Verifica si existe un candidato con el correo dado, excluyendo un ID específico (útil para edición).
+     */
+    suspend fun existeCorreoExcluyendo(correo: String, excluirId: Int): Boolean {
+        return candidatoDao.existeCorreoExcluyendo(correo, excluirId) > 0
+    }
 
     // --- Operaciones para Elecciones ---
 
@@ -86,6 +114,20 @@ class EleccionesRepository(
 
     suspend fun actualizarEleccion(eleccion: Eleccion) {
         eleccionDao.update(eleccion)
+    }
+    
+    /**
+     * Verifica si existe una elección con la gestión dada.
+     */
+    suspend fun existeGestion(gestion: Int): Boolean {
+        return eleccionDao.existeGestion(gestion) > 0
+    }
+    
+    /**
+     * Verifica si existe una elección con la gestión dada, excluyendo un ID específico (útil para edición).
+     */
+    suspend fun existeGestionExcluyendo(gestion: Int, excluirId: Int): Boolean {
+        return eleccionDao.existeGestionExcluyendo(gestion, excluirId) > 0
     }
 
     // --- Operaciones para Puestos Electorales ---
@@ -110,6 +152,27 @@ class EleccionesRepository(
 
     suspend fun actualizarEstadoPuesto(puestoId: Int, estado: String) {
         puestoElectoralDao.updateEstado(puestoId, estado)
+    }
+    
+    /**
+     * Verifica si existe un puesto con el mismo nombre en la misma elección.
+     */
+    suspend fun existeNombrePuestoEnEleccion(eleccionId: Int, nombrePuesto: String): Boolean {
+        return puestoElectoralDao.existeNombrePuestoEnEleccion(eleccionId, nombrePuesto) > 0
+    }
+    
+    /**
+     * Verifica si existe un puesto con el mismo nombre en la misma elección, excluyendo un ID específico.
+     */
+    suspend fun existeNombrePuestoEnEleccionExcluyendo(eleccionId: Int, nombrePuesto: String, excluirId: Int): Boolean {
+        return puestoElectoralDao.existeNombrePuestoEnEleccionExcluyendo(eleccionId, nombrePuesto, excluirId) > 0
+    }
+    
+    /**
+     * Cuenta las postulaciones de un puesto.
+     */
+    suspend fun contarPostulacionesPorPuesto(puestoId: Int): Int {
+        return puestoElectoralDao.contarPostulacionesPorPuesto(puestoId)
     }
 
     // --- Operaciones para Postulaciones ---

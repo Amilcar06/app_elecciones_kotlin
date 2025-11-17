@@ -25,17 +25,19 @@ fun DatePickerDialog(
     onDismiss: () -> Unit
 ) {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-    val fechaDefault = fechaInicial?.let { 
-        try {
-            LocalDate.parse(it, formatter)
-        } catch (e: Exception) {
-            LocalDate.now()
-        }
-    } ?: LocalDate.now()
+    val fechaDefault = remember(fechaInicial) {
+        fechaInicial?.let { 
+            try {
+                LocalDate.parse(it, formatter)
+            } catch (e: Exception) {
+                LocalDate.now()
+            }
+        } ?: LocalDate.now()
+    }
 
-    var añoSeleccionado by remember { mutableStateOf(fechaDefault.year) }
-    var mesSeleccionado by remember { mutableStateOf(fechaDefault.monthValue) }
-    var diaSeleccionado by remember { mutableStateOf(fechaDefault.dayOfMonth) }
+    var añoSeleccionado by remember(fechaDefault) { mutableStateOf(fechaDefault.year) }
+    var mesSeleccionado by remember(fechaDefault) { mutableStateOf(fechaDefault.monthValue) }
+    var diaSeleccionado by remember(fechaDefault) { mutableStateOf(fechaDefault.dayOfMonth) }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -61,19 +63,50 @@ fun DatePickerDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("Año:")
+                    // Usar un estado local que se inicializa una vez y permite edición libre
+                    var añoTexto by remember { mutableStateOf(añoSeleccionado.toString()) }
+                    
+                    // Solo sincronizar cuando el año cambia externamente (al abrir el diálogo con una fecha)
+                    LaunchedEffect(fechaDefault.year) {
+                        añoTexto = fechaDefault.year.toString()
+                        añoSeleccionado = fechaDefault.year
+                    }
+                    
                     OutlinedTextField(
-                        value = añoSeleccionado.toString(),
+                        value = añoTexto,
                         onValueChange = { newValue ->
-                            newValue.toIntOrNull()?.let {
-                                if (it >= 1900 && it <= 2100) {
-                                    añoSeleccionado = it
+                            // Permitir solo números
+                            if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
+                                añoTexto = newValue
+                                // Actualizar añoSeleccionado si es válido
+                                newValue.toIntOrNull()?.let {
+                                    if (it >= 1900 && it <= 2100) {
+                                        añoSeleccionado = it
+                                        // Ajustar día si es necesario (por años bisiestos)
+                                        val maxDias = obtenerMaxDiasMes(mesSeleccionado, añoSeleccionado)
+                                        if (diaSeleccionado > maxDias) {
+                                            diaSeleccionado = maxDias
+                                        }
+                                    }
                                 }
                             }
                         },
                         modifier = Modifier.width(120.dp),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number
-                        )
+                        ),
+                        singleLine = true,
+                        isError = añoTexto.toIntOrNull()?.let { it < 1900 || it > 2100 } ?: false,
+                        supportingText = {
+                            val añoNum = añoTexto.toIntOrNull()
+                            when {
+                                añoTexto.isEmpty() -> Text("Ingrese el año")
+                                añoNum == null -> Text("Solo números")
+                                añoNum < 1900 -> Text("Mínimo 1900")
+                                añoNum > 2100 -> Text("Máximo 2100")
+                                else -> {}
+                            }
+                        }
                     )
                 }
 
