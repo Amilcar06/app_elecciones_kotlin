@@ -120,7 +120,7 @@ class EleccionViewModel(private val repository: EleccionesRepository) : ViewMode
     }
 
     /** Establece el puesto activo para cargar sus datos. */
-    fun setPuestoId(puestoId: Int) {
+    fun setPuestoId(puestoId: Int?) {
         _puestoId.value = puestoId
     }
 

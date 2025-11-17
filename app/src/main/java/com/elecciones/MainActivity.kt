@@ -41,6 +41,7 @@ import com.elecciones.ui.elecciones.RegistrarEleccionScreen
 import com.elecciones.ui.elecciones.RegistrarPuestoScreen
 import com.elecciones.ui.elecciones.RegistrarVotosPorPuestoScreen
 import com.elecciones.ui.elecciones.ResultadosPorPuestoScreen
+import com.elecciones.ui.elecciones.ResultadosEleccionScreen
 import com.elecciones.ui.elecciones.SeleccionarCandidatoScreen
 import com.elecciones.ui.frentes.FrentesScreen
 import com.elecciones.ui.frentes.RegistrarFrenteScreen
@@ -200,9 +201,18 @@ fun AppNavigation(
                 onEditEleccionClick = { eleccionId ->
                     navController.navigate("editar_eleccion/$eleccionId")
                 },
-                // Lógica de navegación: siempre ir a puestos electorales
+                // Lógica de navegación: 
+                // - Si está finalizada, ir a resultados
+                // - Si no, ir a puestos electorales
                 onEleccionClick = { eleccionId ->
-                    navController.navigate("puestos/$eleccionId")
+                    // Verificar el estado de la elección desde el StateFlow
+                    val elecciones = eleccionViewModel.todasLasElecciones.value
+                    val eleccion = elecciones.find { it.id_eleccion == eleccionId }
+                    if (eleccion?.estado == "Finalizado" || eleccion?.estado == "Cerrado") {
+                        navController.navigate("resultados_eleccion/$eleccionId")
+                    } else {
+                        navController.navigate("puestos/$eleccionId")
+                    }
                 }
             )
         }
@@ -320,7 +330,22 @@ fun AppNavigation(
             )
         }
 
-        // --- RUTA: Resultados por Puesto ---
+        // --- RUTA: Resultados de Elección (para elecciones finalizadas) ---
+        composable(
+            route = "resultados_eleccion/{eleccionId}",
+            arguments = listOf(navArgument("eleccionId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val eleccionId = backStackEntry.arguments?.getInt("eleccionId") ?: 0
+            ResultadosEleccionScreen(
+                eleccionViewModel = eleccionViewModel,
+                eleccionId = eleccionId,
+                onVerDetallePuesto = { puestoId ->
+                    navController.navigate("resultados_puesto/$puestoId")
+                }
+            )
+        }
+
+        // --- RUTA: Resultados por Puesto (detalle completo con gráfico) ---
         composable(
             route = "resultados_puesto/{puestoId}",
             arguments = listOf(navArgument("puestoId") { type = NavType.IntType })

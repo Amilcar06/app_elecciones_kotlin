@@ -146,7 +146,14 @@ fun SeleccionarCandidatoScreen(
                                 }
                             }
                             
-                            delay(200) // Esperar que se completen las inserciones
+                            delay(300) // Esperar que se completen las inserciones
+                            
+                            // Forzar actualización del Flow de postulaciones
+                            val puestoIdActual = puestoId
+                            eleccionViewModel.setPuestoId(null)
+                            delay(100)
+                            eleccionViewModel.setPuestoId(puestoIdActual)
+                            delay(200) // Esperar a que se recargue el Flow
                             
                             val mensaje = when {
                                 agregados > 0 && errores == 0 -> "Se agregaron $agregados candidato(s) correctamente"
@@ -224,7 +231,15 @@ fun SeleccionarCandidatoScreen(
                                                 votos = 0
                                             )
                                             eleccionViewModel.insertarPostulacion(postulacion)
-                                            delay(100) // Esperar que se complete la inserción
+                                            delay(200) // Esperar que se complete la inserción
+                                            
+                                            // Forzar actualización del Flow de postulaciones
+                                            val puestoIdActual = puestoId
+                                            eleccionViewModel.setPuestoId(null)
+                                            delay(100)
+                                            eleccionViewModel.setPuestoId(puestoIdActual)
+                                            delay(200) // Esperar a que se recargue el Flow
+                                            
                                             onCandidatoSeleccionado(candidato.id_candidato)
                                         } catch (e: IllegalStateException) {
                                             snackbarHostState.showSnackbar(
