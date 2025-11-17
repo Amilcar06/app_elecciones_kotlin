@@ -68,7 +68,7 @@ fun ImagePicker(
                         .data(imageUri)
                         .build()
                 ),
-                contentDescription = "Logo del frente",
+                contentDescription = "Imagen seleccionada",
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(CircleShape),
@@ -88,7 +88,7 @@ fun ImagePicker(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Agregar Logo",
+                    text = "Agregar Foto",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -107,13 +107,13 @@ private fun saveImageToInternalStorage(context: Context, uri: Uri): Uri? {
         val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
         inputStream?.let {
             // Crear directorio de imágenes si no existe
-            val imagesDir = File(context.filesDir, "logos")
+            val imagesDir = File(context.filesDir, "images")
             if (!imagesDir.exists()) {
                 imagesDir.mkdirs()
             }
             
             // Crear archivo único
-            val fileName = "logo_${System.currentTimeMillis()}.jpg"
+            val fileName = "img_${System.currentTimeMillis()}.jpg"
             val file = File(imagesDir, fileName)
             
             // Copiar el archivo

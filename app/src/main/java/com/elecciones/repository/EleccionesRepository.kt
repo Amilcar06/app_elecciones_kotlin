@@ -147,6 +147,21 @@ class EleccionesRepository(
     }
 
     suspend fun eliminarPuesto(puestoId: Int) {
+        // Validar que el puesto no tenga votos registrados
+        val postulaciones = postulacionDao.getPostulacionesByPuestoSync(puestoId)
+        val tieneVotos = postulaciones.any { it.votos > 0 }
+        
+        if (tieneVotos) {
+            throw IllegalStateException("No se puede eliminar un puesto con votos registrados")
+        }
+        
+        // Si tiene postulaciones pero sin votos, eliminarlas primero
+        if (postulaciones.isNotEmpty()) {
+            postulaciones.forEach { postulacion ->
+                postulacionDao.delete(postulacion.id_postulacion)
+            }
+        }
+        
         puestoElectoralDao.delete(puestoId)
     }
 

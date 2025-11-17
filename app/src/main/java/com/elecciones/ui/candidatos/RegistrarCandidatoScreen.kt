@@ -11,14 +11,17 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import android.net.Uri
 import com.elecciones.data.entities.Candidato
 import com.elecciones.ui.componentes.DatePickerDialog
+import com.elecciones.ui.componentes.ImagePicker
 import com.elecciones.ui.utilidades.*
 import com.elecciones.viewmodel.CandidatoViewModel
 import com.elecciones.viewmodel.FrenteViewModel
@@ -69,6 +72,15 @@ fun RegistrarCandidatoScreen(
     var profesion by remember(candidato) { mutableStateOf(candidato?.profesion ?: "") }
     var aniosExperiencia by remember(candidato) { 
         mutableStateOf(candidato?.anios_experiencia?.toString() ?: "0") 
+    }
+    
+    // Estado para la foto del candidato
+    var fotoUriState by remember(candidato) {
+        mutableStateOf<android.net.Uri?>(
+            candidato?.foto_url?.let { 
+                try { android.net.Uri.parse(it) } catch (e: Exception) { null }
+            }
+        )
     }
     
     // Estados para diálogos y errores
@@ -173,8 +185,16 @@ fun RegistrarCandidatoScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
                     .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Foto del candidato
+                ImagePicker(
+                    imageUri = fotoUriState,
+                    onImageSelected = { uri -> fotoUriState = uri },
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+                
                 // Información del frente
                 Text(
                     text = "Frente Asociado: ${frente?.nombre ?: "Desconocido"}",
@@ -417,6 +437,17 @@ fun RegistrarCandidatoScreen(
             }
             
             // Botones de acción - siempre visibles
+            val isLoading by candidatoViewModel.isLoading.collectAsState()
+            var operacionCompletada by remember { mutableStateOf(false) }
+            
+            // Navegar cuando la operación termine
+            LaunchedEffect(isLoading) {
+                if (!isLoading && operacionCompletada) {
+                    operacionCompletada = false
+                    onGuardarAccion()
+                }
+            }
+            
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -463,7 +494,8 @@ fun RegistrarCandidatoScreen(
                                     telefono = telefono.trim(),
                                     profesion = profesionTrimmed.takeIf { it.isNotBlank() },
                                     direccion = direccionTrimmed.takeIf { it.isNotBlank() },
-                                    anios_experiencia = aniosExperienciaNum
+                                    anios_experiencia = aniosExperienciaNum,
+                                    foto_url = fotoUriState?.toString()
                                 )
                                 
                                 if (esEdicion) {
@@ -471,14 +503,22 @@ fun RegistrarCandidatoScreen(
                                 } else {
                                     candidatoViewModel.insertarCandidato(candidatoActualizado)
                                 }
-                                onGuardarAccion()
+                                operacionCompletada = true
                             }
                         }
                     },
                     modifier = Modifier.weight(1f),
-                    enabled = isFormularioValido
+                    enabled = isFormularioValido && !isLoading
                 ) {
-                    Text(if (esEdicion) "ACTUALIZAR" else "CREAR")
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(if (esEdicion) "ACTUALIZAR" else "CREAR")
+                    }
                 }
                 OutlinedButton(
                     onClick = onGuardarAccion,

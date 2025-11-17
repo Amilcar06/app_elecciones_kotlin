@@ -7,11 +7,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -251,6 +253,7 @@ fun RegistrarVotosPorPuestoScreen(
                 }
             }
 
+            val isLoading by eleccionViewModel.isLoading.collectAsState()
             Button(
                 onClick = {
                     mostrarDialogoConfirmacion = true
@@ -258,9 +261,17 @@ fun RegistrarVotosPorPuestoScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                enabled = puedeGuardar
+                enabled = puedeGuardar && !isLoading
             ) {
-                Text("Guardar Votos y Cerrar Puesto")
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Guardar Votos y Cerrar Puesto")
+                }
             }
             
             // Diálogo de confirmación

@@ -48,5 +48,6 @@ data class Candidato(
     val correo: String?,
     val telefono: String?,
     val profesion: String?,
-    val anios_experiencia: Int?
+    val anios_experiencia: Int?,
+    val foto_url: String? = null // URI de la foto del candidato guardada localmente
 )

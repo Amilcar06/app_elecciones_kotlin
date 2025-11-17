@@ -5,9 +5,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -42,8 +44,19 @@ fun RegistrarPuestoScreen(
     onGuardarClick: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
+    val isLoading by eleccionViewModel.isLoading.collectAsState()
+    var operacionCompletada by remember { mutableStateOf(false) }
+    
     LaunchedEffect(eleccionId) {
         eleccionViewModel.setEleccionId(eleccionId)
+    }
+    
+    // Navegar cuando la operación termine
+    LaunchedEffect(isLoading) {
+        if (!isLoading && operacionCompletada) {
+            operacionCompletada = false
+            onGuardarClick()
+        }
     }
 
     val eleccion by eleccionViewModel.eleccionActual.collectAsState()
@@ -158,16 +171,24 @@ fun RegistrarPuestoScreen(
                             } else {
                                 eleccionViewModel.insertarPuesto(puesto)
                             }
-                            onGuardarClick()
+                            operacionCompletada = true
                         }
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                enabled = isFormularioValido
+                enabled = isFormularioValido && !isLoading
             ) {
-                Text(if (puestoId == null) "Guardar Puesto" else "Actualizar Puesto")
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(if (puestoId == null) "Guardar Puesto" else "Actualizar Puesto")
+                }
             }
         }
     }

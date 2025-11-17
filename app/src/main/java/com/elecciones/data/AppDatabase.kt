@@ -28,7 +28,7 @@ import com.elecciones.data.entities.PuestoElectoral
         PuestoElectoral::class,
         Postulacion::class
     ],
-    version = 6, // Nueva versión: nueva estructura con PuestoElectoral y Postulacion
+    version = 7, // Nueva versión: agregado campo foto_url a Candidato
     exportSchema = false // No exportar el esquema para simplificar
 )
 abstract class AppDatabase : RoomDatabase() {

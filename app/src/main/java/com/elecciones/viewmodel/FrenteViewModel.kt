@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.elecciones.data.entities.Frente
 import com.elecciones.repository.EleccionesRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -28,25 +29,44 @@ class FrenteViewModel(private val repository: EleccionesRepository) : ViewModel(
             initialValue = emptyList() // Valor inicial mientras se carga la data
         )
 
+    // Estado de carga para operaciones asíncronas
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
     /**
      * Inserta un nuevo frente en la base de datos.
      * Se ejecuta en una corrutina lanzada desde viewModelScope.
      */
     fun insertarFrente(frente: Frente) = viewModelScope.launch {
-        repository.insertarFrente(frente)
+        _isLoading.value = true
+        try {
+            repository.insertarFrente(frente)
+        } finally {
+            _isLoading.value = false
+        }
     }
 
     /**
      * Actualiza un frente existente.
      */
     fun actualizarFrente(frente: Frente) = viewModelScope.launch {
-        repository.actualizarFrente(frente)
+        _isLoading.value = true
+        try {
+            repository.actualizarFrente(frente)
+        } finally {
+            _isLoading.value = false
+        }
     }
 
     /**
      * Elimina un frente.
      */
     fun eliminarFrente(frente: Frente) = viewModelScope.launch {
-        repository.eliminarFrente(frente)
+        _isLoading.value = true
+        try {
+            repository.eliminarFrente(frente)
+        } finally {
+            _isLoading.value = false
+        }
     }
 }

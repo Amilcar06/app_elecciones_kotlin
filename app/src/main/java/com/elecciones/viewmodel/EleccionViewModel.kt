@@ -112,6 +112,10 @@ class EleccionViewModel(private val repository: EleccionesRepository) : ViewMode
         initialValue = null
     )
 
+    // Estado de carga para operaciones asíncronas
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
     // --- Acciones (Funciones Públicas) ---
 
     /** Establece la elección activa para cargar sus datos. */
@@ -126,37 +130,72 @@ class EleccionViewModel(private val repository: EleccionesRepository) : ViewMode
 
     /** Inserta una nueva elección en la base de datos. */
     fun insertarEleccion(eleccion: Eleccion) = viewModelScope.launch {
-        repository.insertarEleccion(eleccion)
+        _isLoading.value = true
+        try {
+            repository.insertarEleccion(eleccion)
+        } finally {
+            _isLoading.value = false
+        }
     }
 
     /** Actualiza el estado de una elección (ej: "Programada" -> "En curso"). */
     fun actualizarEleccion(eleccion: Eleccion) = viewModelScope.launch {
-        repository.actualizarEleccion(eleccion)
+        _isLoading.value = true
+        try {
+            repository.actualizarEleccion(eleccion)
+        } finally {
+            _isLoading.value = false
+        }
     }
 
     /** Inserta un nuevo puesto electoral. */
     fun insertarPuesto(puesto: PuestoElectoral) = viewModelScope.launch {
-        repository.insertarPuesto(puesto)
+        _isLoading.value = true
+        try {
+            repository.insertarPuesto(puesto)
+        } finally {
+            _isLoading.value = false
+        }
     }
 
     /** Actualiza un puesto electoral. */
     fun actualizarPuesto(puesto: PuestoElectoral) = viewModelScope.launch {
-        repository.actualizarPuesto(puesto)
+        _isLoading.value = true
+        try {
+            repository.actualizarPuesto(puesto)
+        } finally {
+            _isLoading.value = false
+        }
     }
 
     /** Elimina un puesto electoral. */
     fun eliminarPuesto(puestoId: Int) = viewModelScope.launch {
-        repository.eliminarPuesto(puestoId)
+        _isLoading.value = true
+        try {
+            repository.eliminarPuesto(puestoId)
+        } finally {
+            _isLoading.value = false
+        }
     }
 
     /** Inserta una nueva postulación. */
     suspend fun insertarPostulacion(postulacion: Postulacion) {
-        repository.insertarPostulacion(postulacion)
+        _isLoading.value = true
+        try {
+            repository.insertarPostulacion(postulacion)
+        } finally {
+            _isLoading.value = false
+        }
     }
 
     /** Elimina una postulación. */
     fun eliminarPostulacion(postulacionId: Int) = viewModelScope.launch {
-        repository.eliminarPostulacion(postulacionId)
+        _isLoading.value = true
+        try {
+            repository.eliminarPostulacion(postulacionId)
+        } finally {
+            _isLoading.value = false
+        }
     }
 
     /**
@@ -171,8 +210,13 @@ class EleccionViewModel(private val repository: EleccionesRepository) : ViewMode
         votosNulos: Int,
         votosBlancos: Int
     ) {
-        // Registrar los votos (esto cierra el puesto)
-        repository.registrarVotosPorPuesto(puestoId, postulaciones, votosNulos, votosBlancos)
+        _isLoading.value = true
+        try {
+            // Registrar los votos (esto cierra el puesto)
+            repository.registrarVotosPorPuesto(puestoId, postulaciones, votosNulos, votosBlancos)
+        } finally {
+            _isLoading.value = false
+        }
         
         // Intentar cerrar la elección si todos los puestos están cerrados
         // Esto se hace en un launch separado para no bloquear

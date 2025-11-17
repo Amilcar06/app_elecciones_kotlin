@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.*
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -48,6 +49,10 @@ fun RegistrarEleccionScreen(
     } else {
         null
     }
+    
+    // Validación de negocio: no se puede editar una elección finalizada
+    val eleccionFinalizada = eleccion?.estado == "Finalizado" || eleccion?.estado == "Cerrado"
+    val isLoading by eleccionViewModel.isLoading.collectAsState()
 
     var gestion by remember(eleccion) { mutableStateOf(eleccion?.gestion?.toString() ?: "") }
     var fecha by remember(eleccion) { mutableStateOf(eleccion?.fecha_eleccion ?: "") }
@@ -134,6 +139,25 @@ fun RegistrarEleccionScreen(
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // Mostrar advertencia si la elección está finalizada
+                if (eleccionFinalizada) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Text(
+                            text = "⚠️ Esta elección está finalizada y no puede ser modificada.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+                
                 // Gestión (Dropdown con años disponibles)
                 var gestionExpanded by remember { mutableStateOf(false) }
                 Box(modifier = Modifier.fillMaxWidth()) {
@@ -148,6 +172,7 @@ fun RegistrarEleccionScreen(
                             }
                         },
                         label = { Text("Gestión (Año) *") },
+                        enabled = !eleccionFinalizada,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { gestionExpanded = true },
@@ -217,8 +242,9 @@ fun RegistrarEleccionScreen(
                     label = { Text("Fecha de Elección *") },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { mostrarDatePicker = true },
+                        .clickable(enabled = !eleccionFinalizada) { mostrarDatePicker = true },
                     readOnly = true,
+                    enabled = !eleccionFinalizada,
                     trailingIcon = {
                         IconButton(onClick = { mostrarDatePicker = true }) {
                             Icon(Icons.Default.CalendarToday, contentDescription = "Seleccionar fecha")
@@ -255,7 +281,8 @@ fun RegistrarEleccionScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(120.dp),
-                    maxLines = 5
+                    maxLines = 5,
+                    enabled = !eleccionFinalizada
                 )
             }
             
@@ -285,7 +312,7 @@ fun RegistrarEleccionScreen(
                                 ""
                             }
                             
-                            if (!existeGestion && isFormularioValido) {
+                            if (!existeGestion && isFormularioValido && !eleccionFinalizada) {
                                 if (esEdicion && eleccion != null) {
                                     // Actualizar elección existente
                                     val eleccionActualizada = eleccion.copy(
@@ -304,14 +331,26 @@ fun RegistrarEleccionScreen(
                                     )
                                     eleccionViewModel.insertarEleccion(nuevaEleccion)
                                 }
-                                onGuardarAccion()
+                                // Esperar a que termine la operación
+                                kotlinx.coroutines.delay(300)
+                                if (!isLoading) {
+                                    onGuardarAccion()
+                                }
                             }
                         }
                     },
                     modifier = Modifier.weight(1f),
-                    enabled = isFormularioValido
+                    enabled = isFormularioValido && !eleccionFinalizada && !isLoading
                 ) {
-                    Text(if (esEdicion) "ACTUALIZAR" else "CREAR")
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(if (esEdicion) "ACTUALIZAR" else "CREAR")
+                    }
                 }
                 OutlinedButton(
                     onClick = onGuardarAccion,

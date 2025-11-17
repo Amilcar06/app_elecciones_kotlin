@@ -1,8 +1,10 @@
 package com.elecciones.ui.componentes
 
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
@@ -17,11 +19,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.background
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.elecciones.R
 import com.elecciones.data.entities.Candidato
 import com.elecciones.ui.theme.AppEleccionesTheme
@@ -43,12 +52,41 @@ fun CardCandidato(
     onDeleteClick: (() -> Unit)? = null
 ) {
     var mostrarMenu by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    
+    // Obtener URI de la foto
+    val fotoUri = remember(candidato.foto_url) {
+        if (candidato.foto_url != null && candidato.foto_url.isNotBlank()) {
+            try {
+                Uri.parse(candidato.foto_url)
+            } catch (e: Exception) {
+                null
+            }
+        } else {
+            null
+        }
+    }
+    
+    // Obtener iniciales para avatar por defecto
+    val iniciales = remember(candidato.nombre, candidato.paterno) {
+        "${candidato.nombre.take(1)}${candidato.paterno.take(1)}".uppercase()
+    }
+    
     Card(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .shadow(
+                elevation = 4.dp,
+                shape = RoundedCornerShape(12.dp),
+                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+            ),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
@@ -56,14 +94,51 @@ fun CardCandidato(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground), // Placeholder
-                contentDescription = "Foto de ${candidato.nombre}",
+            // Avatar con foto o iniciales
+            Box(
                 modifier = Modifier
-                    .size(50.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .shadow(
+                        elevation = 2.dp,
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                if (fotoUri != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            ImageRequest.Builder(context)
+                                .data(fotoUri)
+                                .build()
+                        ),
+                        contentDescription = "Foto de ${candidato.nombre}",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    // Avatar con iniciales y fondo de color
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape)
+                            .background(
+                                MaterialTheme.colorScheme.primaryContainer,
+                                CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = iniciales,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -71,20 +146,26 @@ fun CardCandidato(
                 Text(
                     text = "${candidato.nombre} ${candidato.paterno}",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 // Mostramos profesión si no es nulo
                 Text(
                     text = candidato.profesion ?: "Profesión no especificada",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 
             Icon(
                 imageVector = Icons.Default.ArrowForward,
                 contentDescription = "Ver detalles del candidato",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp)
             )
             
             // Menú contextual si hay acciones disponibles

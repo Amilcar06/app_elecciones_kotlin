@@ -47,6 +47,10 @@ class CandidatoViewModel(private val repository: EleccionesRepository) : ViewMod
             initialValue = emptyList()
         )
 
+    // Estado de carga para operaciones asíncronas
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
     /**
      * Establece el ID del frente para el cual se deben cargar los candidatos.
      */
@@ -58,21 +62,36 @@ class CandidatoViewModel(private val repository: EleccionesRepository) : ViewMod
      * Inserta un nuevo candidato.
      */
     fun insertarCandidato(candidato: Candidato) = viewModelScope.launch {
-        repository.insertarCandidato(candidato)
+        _isLoading.value = true
+        try {
+            repository.insertarCandidato(candidato)
+        } finally {
+            _isLoading.value = false
+        }
     }
 
     /**
      * Actualiza un candidato existente.
      */
     fun actualizarCandidato(candidato: Candidato) = viewModelScope.launch {
-        repository.actualizarCandidato(candidato)
+        _isLoading.value = true
+        try {
+            repository.actualizarCandidato(candidato)
+        } finally {
+            _isLoading.value = false
+        }
     }
 
     /**
      * Elimina un candidato.
      */
     fun eliminarCandidato(candidato: Candidato) = viewModelScope.launch {
-        repository.eliminarCandidato(candidato)
+        _isLoading.value = true
+        try {
+            repository.eliminarCandidato(candidato)
+        } finally {
+            _isLoading.value = false
+        }
     }
     
     /**

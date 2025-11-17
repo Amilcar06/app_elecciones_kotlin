@@ -3,8 +3,9 @@ package com.elecciones.ui.componentes
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -13,9 +14,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.background
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -60,16 +64,25 @@ fun CardFrente(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp, horizontal = 8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .shadow(
+                elevation = 4.dp,
+                shape = RoundedCornerShape(16.dp),
+                spotColor = chipColor.copy(alpha = 0.15f)
+            ),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(20.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Logo del frente
+            // Logo del frente con borde de color
             val context = LocalContext.current
             val logoUri = remember(frente.logo_url) {
                 if (frente.logo_url != null && frente.logo_url.isNotBlank()) {
@@ -83,32 +96,48 @@ fun CardFrente(
                 }
             }
             
-            if (logoUri != null) {
-                Image(
-                    painter = rememberAsyncImagePainter(
-                        ImageRequest.Builder(context)
-                            .data(logoUri)
-                            .build()
-                    ),
-                    contentDescription = "Logo de ${frente.nombre}",
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                // Placeholder si no hay logo
-                Image(
-                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                    contentDescription = "Logo de ${frente.nombre}",
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .shadow(
+                        elevation = 3.dp,
+                        shape = CircleShape,
+                        spotColor = chipColor.copy(alpha = 0.3f)
+                    )
+            ) {
+                if (logoUri != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            ImageRequest.Builder(context)
+                                .data(logoUri)
+                                .build()
+                        ),
+                        contentDescription = "Logo de ${frente.nombre}",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    // Placeholder con fondo de color del frente
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape)
+                            .background(chipColor.copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = frente.nombre.take(2).uppercase(),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = chipColor
+                        )
+                    }
+                }
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(20.dp))
 
             // Información del frente
             Column(
@@ -117,28 +146,36 @@ fun CardFrente(
                 Text(
                     text = frente.nombre,
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 // Chip con el color y año de fundación
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     SuggestionChip(
                         onClick = { /* No action */ },
-                        label = { Text(frente.fecha_fundacion.take(4)) }, // Extraer el año
-                        // USAR SuggestionChipDefaults de Material 3
+                        label = { 
+                            Text(
+                                "Fundado ${frente.fecha_fundacion.take(4)}",
+                                style = MaterialTheme.typography.labelSmall
+                            ) 
+                        },
                         colors = SuggestionChipDefaults.suggestionChipColors(
-                            containerColor = chipColor.copy(alpha = 0.2f)
+                            containerColor = chipColor.copy(alpha = 0.15f),
+                            labelColor = chipColor
                         )
                     )
                 }
             }
 
-            // Icono de flecha
+            // Icono de flecha con mejor estilo
             Icon(
                 imageVector = Icons.Default.ArrowForward,
                 contentDescription = "Ver candidatos",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
             )
 
             // Menú contextual si hay acciones disponibles

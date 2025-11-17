@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.elecciones.data.entities.PuestoElectoral
+import com.elecciones.ui.componentes.EmptyState
 import com.elecciones.viewmodel.EleccionViewModel
 
 /**
@@ -46,6 +48,11 @@ fun PuestosElectoralesScreen(
 
     val eleccion by eleccionViewModel.eleccionActual.collectAsState()
     val puestos by eleccionViewModel.puestosPorEleccion.collectAsState()
+    
+    // Ocultar el botón si la elección está finalizada
+    // Estados posibles: "Programada", "En curso", "Finalizado"
+    val estadoEleccion = eleccion?.estado
+    val eleccionFinalizada = estadoEleccion == "Finalizado" || estadoEleccion == "Cerrado"
 
     Scaffold(
         topBar = {
@@ -57,10 +64,7 @@ fun PuestosElectoralesScreen(
             )
         },
         floatingActionButton = {
-            // Ocultar el botón si la elección está finalizada
-            // Estados posibles: "Programada", "En curso", "Finalizado"
-            val estadoEleccion = eleccion?.estado
-            if (estadoEleccion != "Finalizado") {
+            if (!eleccionFinalizada) {
                 FloatingActionButton(onClick = onAddPuestoClick) {
                     Icon(Icons.Default.Add, contentDescription = "Añadir Puesto")
                 }
@@ -68,18 +72,14 @@ fun PuestosElectoralesScreen(
         }
     ) { paddingValues ->
         if (puestos.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .padding(paddingValues)
-                    .padding(16.dp)
-                    .fillMaxWidth()
-            ) {
-                Text(
-                    text = "No hay puestos electorales registrados.\nPulsa el botón + para añadir uno.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            EmptyState(
+                icon = Icons.Default.Work,
+                titulo = "No hay puestos electorales",
+                mensaje = "Comienza agregando los puestos electorales para esta elección. Cada puesto representa un cargo a elegir.",
+                textoAccion = if (!eleccionFinalizada) "Crear primer puesto" else null,
+                onAccionClick = if (!eleccionFinalizada) onAddPuestoClick else null,
+                modifier = Modifier.padding(paddingValues)
+            )
         } else {
             LazyColumn(
                 modifier = Modifier.padding(paddingValues)

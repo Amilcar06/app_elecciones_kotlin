@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -29,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.elecciones.data.entities.PostulacionConCandidato
+import com.elecciones.ui.componentes.EmptyState
 import com.elecciones.viewmodel.EleccionViewModel
 
 /**
@@ -106,10 +108,12 @@ fun DetallePuestoScreen(
             }
 
             if (postulaciones.isEmpty()) {
-                Text(
-                    text = "No hay postulaciones registradas.\nPulsa el botón + para añadir una.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                EmptyState(
+                    icon = Icons.Default.Person,
+                    titulo = "No hay candidatos postulados",
+                    mensaje = "Agrega candidatos para este puesto electoral. Cada candidato debe pertenecer a un frente político.",
+                    textoAccion = if (puedeModificar) "Agregar primer candidato" else null,
+                    onAccionClick = if (puedeModificar) onAddPostulacionClick else null,
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
             } else {
